@@ -151,3 +151,7 @@ variables at the top (`--uic-navy`, `--uic-cyan`, ...).
   when run from another script or an editor task, and appears to hang.
 - The HTML deck is a single file you can post to a course site. If a deck uses
   local images, upload them alongside it with the same relative paths.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
