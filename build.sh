@@ -22,12 +22,12 @@ for deck in "$@"; do
   # stdin is closed so marp doesn't wait for piped input when run from scripts
   $MARP "$deck" -o "$out.html" </dev/null
 
-  # Presenter view: add a drag handle between the next-slide preview and notes.
+  # Presenter view: slide strip along the bottom + drag handles to resize panes.
   python3 -c '
 import sys
 html, snippet = open(sys.argv[1]).read(), open(sys.argv[2]).read()
 open(sys.argv[1], "w").write(html.replace("</body>", snippet + "</body>", 1))
-' "$out.html" engine/presenter-dragbar.html
+' "$out.html" engine/presenter-extras.html
 
   if [ "$PDF" = 1 ]; then
     $MARP --pdf --allow-local-files "$deck" -o "$out.pdf" </dev/null

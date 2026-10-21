@@ -1,0 +1,214 @@
+<!-- Injected by build.sh into every built HTML deck. Adds two things to
+     Marp's presenter view (?view=presenter, opened with the p key):
+
+     1. A slide strip along the bottom, like PowerPoint's presenter view.
+        Click a thumbnail to jump there; the audience window follows.
+     2. Drag handles: one between the next-slide preview and the notes, one
+        on top of the strip. Drag to resize, double-click to reset. Sizes are
+        remembered per browser. -->
+<style>
+  body[data-bespoke-view=presenter] .bespoke-marp-presenter-container {
+    grid-template-areas:
+      "current dragbar next"
+      "current dragbar note"
+      "info    dragbar note"
+      "strip   strip   strip" !important;
+    grid-template-rows:
+      minmax(140px, var(--uic-next-row, 1fr))
+      minmax(60px, 2fr)
+      3em
+      var(--uic-strip-h, 130px) !important;
+  }
+  .uic-dragbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -3px;
+    height: 6px;
+    z-index: 10;
+    cursor: row-resize;
+    background: #0288d1;
+    opacity: 0;
+    transition: opacity .4s linear .1s;
+  }
+  .uic-dragbar:hover,
+  .uic-dragbar.dragging { opacity: 1; }
+
+  .uic-strip-area { grid-area: strip; position: relative; min-height: 0; }
+  .uic-strip {
+    position: relative; /* offsetParent for thumbnails, so offsetLeft ignores scrolling */
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 10px 14px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: #1b1b1b;
+    border-top: 1px solid #333;
+    scrollbar-color: #eeeeee80 #0000;
+    scrollbar-width: thin;
+  }
+  .uic-thumb {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #aaa;
+    font: 12px Helvetica, Arial, sans-serif;
+    cursor: pointer;
+  }
+  .uic-thumb-slides {
+    height: calc(var(--uic-strip-h, 130px) - 40px);
+    aspect-ratio: var(--uic-thumb-ratio, 16 / 9);
+    background: #fff;
+    border-radius: 3px;
+    outline: 3px solid transparent;
+    outline-offset: 1px;
+    overflow: hidden;
+    text-align: left; /* don't inherit the button's centering */
+  }
+  .uic-thumb-slides > svg { display: block; width: 100%; height: 100%; }
+  .uic-thumb:hover .uic-thumb-slides { outline-color: #666; }
+  .uic-thumb.active .uic-thumb-slides { outline-color: #e8743b; }
+  .uic-thumb.active { color: #fff; }
+</style>
+<script>
+(() => {
+  if (document.body.getAttribute('data-bespoke-view') !== 'presenter' && !/view=presenter/.test(location.search)) return
+
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k) } catch (e) { return null } },
+    set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} },
+  }
+
+  // A handle on the top edge of `host`. onDrag(clientY) returns the new size
+  // in px (or null to reset); the size is stored under `key` in CSS var `cssVar`.
+  const addDragbar = (grid, host, key, cssVar, title, onDrag) => {
+    const apply = (px) => {
+      if (px == null) grid.style.removeProperty(cssVar)
+      else grid.style.setProperty(cssVar, `${px}px`)
+    }
+    const saved = store.get(key)
+    if (saved) apply(+saved)
+
+    const bar = document.createElement('div')
+    bar.className = 'uic-dragbar'
+    bar.title = title
+    host.appendChild(bar)
+    bar.addEventListener('pointerdown', (e) => {
+      e.preventDefault()
+      bar.setPointerCapture(e.pointerId)
+      bar.classList.add('dragging')
+    })
+    bar.addEventListener('pointermove', (e) => {
+      if (!bar.hasPointerCapture(e.pointerId)) return
+      const px = Math.round(onDrag(e.clientY))
+      apply(px)
+      store.set(key, px)
+    })
+    const stop = (e) => {
+      if (bar.hasPointerCapture(e.pointerId)) bar.releasePointerCapture(e.pointerId)
+      bar.classList.remove('dragging')
+    }
+    bar.addEventListener('pointerup', stop)
+    bar.addEventListener('pointercancel', stop)
+    bar.addEventListener('dblclick', () => { apply(null); store.set(key, null) })
+  }
+
+  // Marp scopes slide CSS to `div#:$p > svg > foreignObject > section`.
+  // Copy those rules for `div.uic-thumb-slides` so thumbnails look the same.
+  const copySlideStyles = () => {
+    const scoped = [...document.querySelectorAll('style')]
+      .map((s) => s.textContent)
+      .filter((css) => css.includes('div#\\:\\$p'))
+      .map((css) => css.split('div#\\:\\$p').join('div.uic-thumb-slides'))
+    const style = document.createElement('style')
+    style.textContent = scoped.join('\n')
+    document.head.appendChild(style)
+  }
+
+  const buildStrip = (grid, slides) => {
+    // outer area holds the resize handle; inner strip scrolls sideways
+    const area = document.createElement('div')
+    area.className = 'uic-strip-area'
+    const strip = document.createElement('div')
+    strip.className = 'uic-strip'
+    area.appendChild(strip)
+    const box = slides[0].viewBox.baseVal
+    if (box && box.height) grid.style.setProperty('--uic-thumb-ratio', `${box.width} / ${box.height}`)
+
+    const thumbs = slides.map((svg, i) => {
+      const clone = svg.cloneNode(true)
+      clone.removeAttribute('class')
+      clone.removeAttribute('data-bespoke-marp-load')
+      clone.setAttribute('aria-hidden', 'true')
+      // show every step, and drop ids so #N anchors still mean the real slide
+      for (const el of clone.querySelectorAll('[data-bespoke-marp-fragment]')) el.removeAttribute('data-bespoke-marp-fragment')
+      for (const el of clone.querySelectorAll('[id]')) el.removeAttribute('id')
+
+      const holder = document.createElement('div')
+      holder.className = 'uic-thumb-slides'
+      holder.appendChild(clone)
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'uic-thumb'
+      btn.title = `Go to slide ${i + 1}`
+      btn.append(holder, String(i + 1))
+      // Marp's hash navigation also moves the synced audience window
+      btn.addEventListener('click', () => { location.hash = `#${i + 1}` })
+      strip.appendChild(btn)
+      return btn
+    })
+    grid.appendChild(area)
+
+    // Highlight the current slide and center it in the strip.
+    let current = -1
+    const sync = (behavior) => {
+      const i = slides.findIndex((s) => s.classList.contains('bespoke-marp-active'))
+      if (i < 0) return
+      const moved = i !== current
+      current = i
+      thumbs.forEach((t, j) => t.classList.toggle('active', j === i))
+      const t = thumbs[i]
+      strip.scrollTo({
+        left: t.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2,
+        behavior: moved && behavior === 'smooth' ? 'smooth' : 'instant',
+      })
+    }
+    new MutationObserver(() => sync('smooth')).observe(slides[0].parentElement, { subtree: true, attributes: true, attributeFilter: ['class'] })
+    new ResizeObserver(() => sync('instant')).observe(strip) // also runs once on load
+    return area
+  }
+
+  const attach = () => {
+    const grid = document.querySelector('.bespoke-marp-presenter-container')
+    const note = grid && grid.querySelector('.bespoke-marp-presenter-note-container')
+    const parent = grid && grid.querySelector('.bespoke-marp-parent')
+    const slides = parent ? [...parent.querySelectorAll(':scope > svg')] : []
+    if (!note || !slides.length) return false
+
+    copySlideStyles()
+    const stripArea = buildStrip(grid, slides)
+    const top = () => grid.getBoundingClientRect().top
+    addDragbar(grid, note, 'uic-presenter-next-row', '--uic-next-row',
+      'Drag to resize the next-slide preview (double-click to reset)',
+      // keep ~120px for the notes + info bar above the strip
+      (y) => Math.max(140, Math.min(y - top(), grid.clientHeight - stripArea.offsetHeight - 120)))
+    addDragbar(grid, stripArea, 'uic-presenter-strip-h', '--uic-strip-h',
+      'Drag to resize the slide strip (double-click to reset)',
+      (y) => Math.max(80, Math.min(grid.clientHeight - (y - top()), grid.clientHeight * 0.45)))
+    return true
+  }
+
+  if (!attach()) {
+    const mo = new MutationObserver(() => { if (attach()) mo.disconnect() })
+    mo.observe(document.body, { childList: true, subtree: true })
+  }
+})()
+</script>

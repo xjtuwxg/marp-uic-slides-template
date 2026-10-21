@@ -2,8 +2,8 @@
 
 Write lecture slides in Markdown and get decks that look like the UIC CS
 PowerPoint template, with click-to-reveal animations, iClicker quiz slides,
-and a better presenter view. Output is a self-contained HTML deck (for
-presenting) and a PDF (for handouts).
+and a PowerPoint-style presenter view. Output is a self-contained HTML deck
+(for presenting) and a PDF (for handouts).
 
 ![Example slides](docs/preview.png)
 
@@ -125,9 +125,18 @@ Ask the class which defense removes the bug.
 -->
 ```
 
-In presenter view (`p`), drag the vertical divider to resize the columns, and
-the horizontal handle under the next-slide preview to enlarge it. Double-click
-the handle to reset it.
+### Presenter view
+
+Press `p` in the HTML deck to open presenter view in a new window: current
+slide, next slide, notes, and a timer. This template adds:
+
+- **Slide strip:** thumbnails of every slide along the bottom, like
+  PowerPoint's presenter view. Click one to jump there; the audience window
+  follows. The current slide is highlighted and kept in view.
+- **Resizable panes:** drag the vertical divider to resize the columns, the
+  handle under the next-slide preview to enlarge it, and the top edge of the
+  strip to make thumbnails bigger. Double-click a handle to reset it. Sizes
+  are remembered per browser.
 
 ## Project layout
 
@@ -135,7 +144,7 @@ the handle to reset it.
 slides/                       your decks (*.md); builds land next to them
 theme/uic-cs.css              the Marp theme (colors, fonts, slide types)
 engine/marp-engine.mjs        Marp plugin that adds <pause>
-engine/presenter-dragbar.html presenter-view drag handle, added to each HTML build
+engine/presenter-extras.html  presenter-view slide strip + resize handles, added to each HTML build
 build.sh                      builds HTML + PDF
 .vscode/settings.json         theme setup for the VS Code preview
 ```
