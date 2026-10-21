@@ -100,6 +100,27 @@ group:
 All three share one click order, top to bottom. Inside a column, a `<pause>`
 step stops at the end of that column.
 
+### Hiding a slide
+
+Put `<!-- hide -->` on its own line anywhere in a slide to leave it out of
+the build, like PowerPoint's *Hide Slide*. The slide is removed from the HTML,
+the PDF, and the presenter notes, and page numbers stay consecutive. Delete
+the line to bring the slide back.
+
+```markdown
+<!-- _class: answer -->
+<!-- hide -->
+
+## Q6 → **D. SQL injection**
+```
+
+Use this rather than wrapping a slide in `<!-- ... -->`. Marp turns any
+comment that isn't a directive into a speaker note, so a commented-out slide
+still ends up in the HTML file, where students can read it.
+
+For a short note to yourself that never reaches the deck, use
+`[//]: # (your note)` on its own line, with blank lines around it.
+
 ### Layout helpers
 
 | Markup | Effect |
@@ -143,7 +164,7 @@ slide, next slide, notes, and a timer. This template adds:
 ```
 slides/                       your decks (*.md); builds land next to them
 theme/uic-cs.css              the Marp theme (colors, fonts, slide types)
-engine/marp-engine.mjs        Marp plugin that adds <pause>
+engine/marp-engine.mjs        Marp plugin that adds <pause> and <!-- hide -->
 engine/presenter-extras.html  presenter-view slide strip + resize handles, added to each HTML build
 build.sh                      builds HTML + PDF
 .vscode/settings.json         theme setup for the VS Code preview
