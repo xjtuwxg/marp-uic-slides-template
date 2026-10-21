@@ -118,8 +118,24 @@ Use this rather than wrapping a slide in `<!-- ... -->`. Marp turns any
 comment that isn't a directive into a speaker note, so a commented-out slide
 still ends up in the HTML file, where students can read it.
 
-For a short note to yourself that never reaches the deck, use
-`[//]: # (your note)` on its own line, with blank lines around it.
+### Commenting out a line
+
+Start a line with `%%` to comment it out, like `//` in C. The line is removed
+before Marp reads the file, so it never reaches the slide, the notes, the
+HTML, or the PDF. No blank lines are needed, and a list with a commented-out
+bullet stays one list:
+
+```markdown
+- Stack canaries, DEP/NX, ASLR, CFI
+%% - Pointer authentication (skip this year)
+- Sanitizers, fuzzing
+%% TODO: add the Android numbers chart
+```
+
+`%%` must be the first thing on the line (indentation is fine, so nested
+bullets work). Inside ```` ``` ```` or `~~~` code blocks it is left alone,
+and `%%` in the middle of a line is ordinary text. VS Code's preview doesn't
+apply it and shows these lines as text; `build.sh` does.
 
 ### Layout helpers
 
@@ -164,7 +180,7 @@ slide, next slide, notes, and a timer. This template adds:
 ```
 slides/                       your decks (*.md); builds land next to them
 theme/uic-cs.css              the Marp theme (colors, fonts, slide types)
-engine/marp-engine.mjs        Marp plugin that adds <pause> and <!-- hide -->
+engine/marp-engine.mjs        Marp plugin: <pause>, <!-- hide -->, and %% comments
 engine/presenter-extras.html  presenter-view slide strip + resize handles, added to each HTML build
 build.sh                      builds HTML + PDF
 .vscode/settings.json         theme setup for the VS Code preview

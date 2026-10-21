@@ -1,7 +1,8 @@
-// Marp engine with two extra tags:
+// Marp engine with three additions:
 //
 //   <pause>       click-to-reveal steps (like Beamer's \pause)
 //   <!-- hide --> leave this slide out of the build (like PowerPoint's Hide Slide)
+//   %% text       comment out one line (like // in C)
 //
 // <pause>:
 // Put <pause> on its own line (column 0). Everything after it on the slide is
@@ -16,6 +17,11 @@
 // <!-- hide -->: put it on its own line anywhere in a slide. The slide is
 // dropped before Marp numbers the slides, so it is not in the HTML, the PDF,
 // or the presenter notes, and page numbers stay consecutive.
+//
+// %%: a line whose first non-space characters are %% is deleted before Marp
+// parses the Markdown, so it never reaches the slide, the notes, the HTML, or
+// the PDF, and the lines around it join up as if it were never there (a list
+// stays one list). Lines inside ``` or ~~~ code blocks are kept.
 //
 // Used by build.sh via: marp --engine ./engine/marp-engine.mjs
 
@@ -109,4 +115,27 @@ function hideSlide(md) {
   })
 }
 
-export default ({ marp }) => marp.use(pauseStep).use(hideSlide)
+function lineComment(md) {
+  const COMMENT = /^\s*%%/
+  const FENCE = /^ {0,3}(`{3,}|~{3,})/
+
+  md.core.ruler.before('block', 'line_comment', (state) => {
+    if (state.inlineMode || !state.src.includes('%%')) return
+    let fence = null // the open code fence's marker, e.g. "```"
+    state.src = state.src
+      .split('\n')
+      .filter((line) => {
+        const f = line.match(FENCE)
+        if (fence) {
+          // a closing fence uses the same character, at least as many times
+          if (f && f[1][0] === fence[0] && f[1].length >= fence.length && !line.slice(f[0].length).trim()) fence = null
+          return true
+        }
+        if (f) { fence = f[1]; return true }
+        return !COMMENT.test(line)
+      })
+      .join('\n')
+  })
+}
+
+export default ({ marp }) => marp.use(pauseStep).use(hideSlide).use(lineComment)
