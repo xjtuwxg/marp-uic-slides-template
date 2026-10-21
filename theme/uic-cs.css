@@ -1,0 +1,203 @@
+/* @theme uic-cs
+ *
+ * Marp theme matching the UIC CS PowerPoint lecture template: white slides,
+ * bold navy Arial titles with a short cyan underline bar, gray Helvetica body
+ * text, and the four-color UIC stripe in the bottom-left corner. Geometry is
+ * scaled from the 13.33" x 7.5" PowerPoint master to Marp's 1280 x 720 canvas.
+ */
+
+@import 'default';
+
+:root {
+  /* Colors taken from the pptx theme / slide master */
+  --uic-navy: #001E62;
+  --uic-cyan: #00B5E2;    /* title-slide text, underline bar */
+  --uic-sky: #41B6E6;     /* stripe block 2 */
+  --uic-red: #D50032;     /* stripe block 3 */
+  --uic-gold: #FFBF3F;    /* stripe block 4 */
+  --uic-gray: #656665;    /* body text */
+  --ink: #2b2b2b;
+  --tint: #f4f6fa;
+  --ok: #1a7f37;
+  --bad: #b42318;
+}
+
+section {
+  width: 1280px;
+  height: 720px;
+  font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+  font-size: 26px;
+  line-height: 1.35;
+  color: var(--uic-gray);
+  padding: 72px 105px 56px;
+  /* the default theme centers content vertically; the pptx anchors titles at the top */
+  place-content: start !important;
+  /* UIC stripe: navy | sky | red | gold, each 140 x 20 px, bottom-left */
+  background:
+    linear-gradient(to right,
+      var(--uic-navy) 0 140px, var(--uic-sky) 140px 280px,
+      var(--uic-red) 280px 420px, var(--uic-gold) 420px 560px,
+      transparent 560px) left bottom / 100% 20px no-repeat,
+    #fff;
+}
+
+/* ---------- Headings ---------- */
+h1, h2 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  color: var(--uic-navy);
+  letter-spacing: -0.2px;
+}
+h1 { font-size: 52px; margin: 0 0 18px; }
+h2 { font-size: 44px; margin: 0 0 30px; line-height: 1.15; border: none; padding: 0; }
+/* the short cyan bar under every slide title */
+h2::after {
+  content: "";
+  display: block;
+  width: 84px;
+  height: 11px;
+  margin-top: 12px;
+  background: var(--uic-cyan);
+}
+h2 strong { color: var(--uic-red); }
+h3 {
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--uic-red);
+  font-size: 26px;
+  margin: 8px 0 4px;
+}
+
+/* ---------- Body ---------- */
+p { margin: 0 0 14px; }
+strong { color: var(--uic-navy); }
+em { color: var(--uic-red); font-style: normal; font-weight: 600; }
+ul, ol { margin: 4px 0 12px; padding-left: 1.1em; }
+li { margin: 5px 0; }
+li::marker { color: var(--uic-gray); }
+/* "* ### Heading" + indented bullets = one click-to-reveal group;
+   drop the outer bullet/indent so it looks like a plain heading + list */
+ul:has(> li > h3:first-child) { padding-left: 0; margin: 0; }
+li:has(> h3:first-child) { list-style: none; margin: 0; }
+li:has(> h3:first-child) > ul { list-style: disc; }
+
+/* Click-to-reveal steps. Marp's HTML viewer reveals, in order, every element
+   carrying data-marpit-fragment: "*" list items, or any tag you write as
+   <div data-marpit-fragment> ... </div>. Revealed steps fade in. */
+[data-bespoke-marp-fragment=inactive] { opacity: 0; }
+[data-bespoke-marp-fragment=active] { opacity: 1; transition: opacity .45s ease-out; }
+/* a list split by a step wrapper keeps normal bullet spacing */
+ul:has(+ div[data-marpit-fragment] > ul:first-child) { margin-bottom: 0; }
+div[data-marpit-fragment] > ul:first-child { margin-top: 0; }
+a { color: var(--uic-navy); }
+
+code {
+  font-family: "Courier New", Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  color: var(--ink);
+  background: none;
+  padding: 0;
+}
+pre {
+  font-size: 19px;
+  line-height: 1.38;
+  background: var(--tint);
+  border: none;
+  border-left: 5px solid var(--uic-navy);
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 8px 0;
+}
+pre code { font-family: Menlo, "JetBrains Mono", Consolas, monospace; font-size: 1em; color: var(--ink); }
+
+table { font-size: 21px; border-collapse: collapse; margin: 8px 0; color: var(--ink); }
+th { background: var(--uic-navy); color: #fff; padding: 7px 14px; font-family: Arial, Helvetica, sans-serif; border: none; }
+td { padding: 6px 14px; border: none; border-bottom: 1px solid #d9dde5; }
+tr:nth-child(even) td { background: var(--tint); }
+
+blockquote {
+  border-left: 5px solid var(--uic-cyan);
+  background: #eef9fd;
+  color: var(--ink);
+  padding: 8px 18px;
+  margin: 12px 0;
+  font-size: 0.95em;
+}
+blockquote::before, blockquote::after { content: none; }
+
+/* page number: bottom-right like the pptx slide-number placeholder */
+section::after {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  color: var(--uic-gray);
+  right: 40px;
+  bottom: 26px;
+}
+footer { display: none; }
+
+/* ---------- Helpers used in the deck ---------- */
+.cols  { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+.cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; }
+.ok  { color: var(--ok);  font-weight: 700; }
+.bad { color: var(--bad); font-weight: 700; }
+.small { font-size: 0.8em; color: var(--uic-gray); }
+.tag { display: inline-block; background: var(--uic-red); color: #fff; font-size: 16px; font-weight: 700; padding: 3px 10px; border-radius: 3px; letter-spacing: .5px; }
+.time { position: absolute; top: 26px; right: 40px; font-size: 15px; color: var(--uic-gray); }
+.box { background: var(--tint); border-left: 5px solid var(--uic-cyan); padding: 12px 18px; }
+
+/* ---------- Title slide (pptx layout "1B Title") ---------- */
+section.title {
+  place-content: safe center center !important;
+  text-align: center;
+  padding-top: 40px;
+}
+section.title h1 {
+  color: var(--uic-cyan);
+  font-size: 46px;
+  margin: 0 0 36px;
+}
+section.title h2 {
+  color: var(--uic-cyan);
+  font-size: 38px;
+  font-style: italic;
+  margin: 0 0 36px;
+}
+section.title h2::after { display: none; }
+section.title h2 em { color: inherit; font-weight: 700; font-style: italic; }
+section.title h3 {
+  color: var(--uic-cyan);
+  font-size: 30px;
+  margin: 0 0 36px;
+}
+section.title p { color: var(--uic-navy); font-size: 28px; }
+
+/* ---------- Section divider (same family as title slide) ---------- */
+section.divider { place-content: safe center center !important; padding-left: 140px; }
+section.divider h1 { font-size: 60px; margin-bottom: 0; }
+section.divider h1::after {
+  content: "";
+  display: block;
+  width: 110px;
+  height: 14px;
+  margin: 18px 0 22px;
+  background: var(--uic-cyan);
+}
+section.divider p { font-size: 30px; color: var(--uic-gray); }
+
+/* ---------- iClicker question / answer slides ---------- */
+section.clicker::before,
+section.answer::before {
+  position: absolute;
+  top: 28px;
+  right: 40px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 3px;
+}
+section.clicker::before { content: "iClicker"; background: var(--uic-gold); color: var(--uic-navy); }
+section.clicker h2::after { background: var(--uic-gold); }
+section.answer::before { content: "Answer"; background: var(--uic-navy); color: #fff; }
+section.answer h2::after { background: var(--uic-red); }

@@ -1,0 +1,7 @@
+{
+  // Marp for VS Code (marp-team.marp-vscode): live preview with the UIC theme.
+  // The preview does not load engine/marp-engine.mjs, so <pause> steps show
+  // fully revealed there; run ./build.sh to see them.
+  "markdown.marp.themes": ["./theme/uic-cs.css"],
+  "markdown.marp.enableHtml": true
+}

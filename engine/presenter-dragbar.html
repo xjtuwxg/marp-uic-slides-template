@@ -1,0 +1,75 @@
+<!-- Injected by build.sh into every built HTML deck.
+     Adds a horizontal drag handle to Marp's presenter view (?view=presenter)
+     between the next-slide preview and the speaker notes. Drag it down to
+     enlarge the preview; double-click to reset. The size is remembered. -->
+<style>
+  body[data-bespoke-view=presenter] .bespoke-marp-presenter-container {
+    grid-template-rows: minmax(140px, var(--uic-next-row, 1fr)) minmax(60px, 2fr) 3em !important;
+  }
+  .uic-next-dragbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -3px;
+    height: 6px;
+    z-index: 10;
+    cursor: row-resize;
+    background: #0288d1;
+    opacity: 0;
+    transition: opacity .4s linear .1s;
+  }
+  .uic-next-dragbar:hover,
+  .uic-next-dragbar.dragging { opacity: 1; }
+</style>
+<script>
+(() => {
+  const KEY = 'uic-presenter-next-row'
+  const attach = () => {
+    const grid = document.querySelector('.bespoke-marp-presenter-container')
+    const note = grid && grid.querySelector('.bespoke-marp-presenter-note-container')
+    if (!note) return false
+
+    const set = (px) => {
+      if (px == null) grid.style.removeProperty('--uic-next-row')
+      else grid.style.setProperty('--uic-next-row', `${px}px`)
+    }
+    try { const saved = localStorage.getItem(KEY); if (saved) set(+saved) } catch (e) {}
+
+    const bar = document.createElement('div')
+    bar.className = 'uic-next-dragbar'
+    bar.title = 'Drag to resize the next-slide preview (double-click to reset)'
+    note.appendChild(bar)
+
+    bar.addEventListener('pointerdown', (e) => {
+      e.preventDefault()
+      bar.setPointerCapture(e.pointerId)
+      bar.classList.add('dragging')
+    })
+    bar.addEventListener('pointermove', (e) => {
+      if (!bar.hasPointerCapture(e.pointerId)) return
+      const top = grid.getBoundingClientRect().top
+      // keep at least ~120px for the notes + info bar
+      const px = Math.max(140, Math.min(e.clientY - top, grid.clientHeight - 120))
+      set(px)
+      try { localStorage.setItem(KEY, px) } catch (err) {}
+    })
+    const stop = (e) => {
+      if (bar.hasPointerCapture(e.pointerId)) bar.releasePointerCapture(e.pointerId)
+      bar.classList.remove('dragging')
+    }
+    bar.addEventListener('pointerup', stop)
+    bar.addEventListener('pointercancel', stop)
+    bar.addEventListener('dblclick', () => {
+      set(null)
+      try { localStorage.removeItem(KEY) } catch (e) {}
+    })
+    return true
+  }
+
+  if (document.body.getAttribute('data-bespoke-view') !== 'presenter' && !/view=presenter/.test(location.search)) return
+  if (!attach()) {
+    const mo = new MutationObserver(() => { if (attach()) mo.disconnect() })
+    mo.observe(document.body, { childList: true, subtree: true })
+  }
+})()
+</script>
